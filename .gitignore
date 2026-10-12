@@ -1,0 +1,12 @@
+*.pem
+*.key
+*.p12
+*.pfx
+.env
+.env.*
+!.env.example
+.aws/
+credentials
+*.zip
+.DS_Store
+Thumbs.db
