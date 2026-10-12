@@ -29,9 +29,28 @@ AWS에 웹 서비스 환경을 구성하고 EC2에 Nginx를 설치하였다. SSH
 
 외부 HTTP 요청이 Internet Gateway를 통해 Public Subnet의 EC2·Nginx로 전달되고 응답이 반환되는 흐름을 표시하였다. 라우팅 테이블은 서브넷에 연결된 경로 규칙으로, Security Group은 EC2 접근 규칙으로 표현하였다.
 
+### 네트워크 및 접근 제어 구성 요약
+
+- VPC 구성 CIDR: `10.0.0.0/16`
+- Public Subnet 구성 CIDR: `10.0.1.0/24`
+- VPC 내부 경로: `10.0.0.0/16 → local`
+- 인터넷 기본 경로: **`0.0.0.0/0 → igw-0c96bf4bc03058ae2`**
+- 보안 그룹 구성 기준: **HTTP TCP 80 → 0.0.0.0/0**, **SSH TCP 22 → 학습자 공인 IPv4/32**
+- 외부 접속 조건: **퍼블릭 IP 3.38.244.69 + 서브넷 인터넷 경로 + HTTP 허용 + Nginx 실행**
+
+[네트워크·보안·IAM·운영 설계 설명](docs/network-security-operations.md)에 경로의 의미, 허용·차단 기준, 최소권한 설계와 비용 대응을 정리하였다. 구성 기준과 실제 설정 화면의 증빙 범위는 해당 문서에 구분하였다.
+
 ## 2. 웹 서버 설치 및 검증
 
-SSH로 EC2의 Ubuntu 사용자에 접속하여 다음 명령을 실행하였다.
+Windows PowerShell에서 다음 명령으로 EC2의 Ubuntu 사용자에 접속하였다. 개인 키 경로는 개인정보를 제외하여 표시하였다.
+
+```powershell
+ssh -i "<개인 키 파일 경로>\my-key.pem" ubuntu@3.38.244.69
+```
+
+서버 내부 HTTP 응답 기록 시각은 한국 시간 **2026-10-13 00:22:53**, 반복 검증 시각은 **01:30:48**이다. SSH 접속 자체의 정확한 시작 시각은 별도 기록에 포함되어 있지 않다.
+
+EC2 내부에서 다음 명령을 실행하였다.
 
 ```bash
 sudo apt update
@@ -60,6 +79,10 @@ curl -I http://localhost
 
 [설치 및 접속 검증 기록](docs/evidence-summary.md)
 
+### 검증 방식 선택 근거
+
+원 과제의 외부 접속 요구사항은 **(A) 브라우저 접속 또는 (B) GET /health 중 하나를 선택**하는 것이다. 본 실습은 A를 선택하고 접속 URL과 스크린샷을 제시하였다. 따라서 `/health` 결과가 없는 것은 선택하지 않은 B 방식의 미수행이며, 원 과제에서 A와 B를 모두 요구한 것은 아니다.
+
 ## 3. 트러블슈팅
 
 SSH 접속 과정에서 발생한 `UNPROTECTED PRIVATE KEY FILE` 경고를 분석하였다. 서버 지문 확인 기록을 통해 SSH 서버 도달 여부를 구분하고, 개인 키 파일 권한을 중심으로 해결 절차를 정리하였다. 이후 Ubuntu 로그인과 Nginx 설치·접속 성공 결과를 기록하였다.
@@ -82,6 +105,7 @@ docs/
   evidence-summary.md
   troubleshooting.md
   cleanup-checklist.md
+  network-security-operations.md
   evidence/
     browser-access.png
     ec2-terminating.png
@@ -93,3 +117,5 @@ docs/
 ```
 
 개인 키 파일, 비밀번호 및 액세스 키는 저장소에 포함하지 않았다.
+
+
